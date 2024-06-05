@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #gameCanvas {
+            border: 1px solid #000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-over h2 {
+            margin-top: 0;
+        }
+
+        .game-over button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .game-over button:hover {
+            background-color: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game variables
+        let snakeX = 0;
+        let snakeY = 0;
+        let velocityX = 1;
+        let velocityY = 0;
+        let snakeTrail = [];
+        let snakeLength = 1;
+        let appleX = 0;
+        let appleY = 0;
+        let score = 0;
+        const gridSize = 20;
+        const cellSize = 30;
+        let gameOver = false;
+
+        // Game functions
+        function drawSnake() {
+          ctx.fillStyle = 'green';
+          for (let i = 0; i < snakeTrail.length; i++) {
+            ctx.fillRect(snakeTrail[i].x * cellSize, snakeTrail[i].y * cellSize, cellSize, cellSize);
+          }
+        }
+
+        function moveSnake() {
+          snakeX = (snakeX + velocityX) % gridSize;
+          snakeY = (snakeY + velocityY) % gridSize;
+          snakeTrail.push({ x: snakeX, y: snakeY });
+          if (snakeTrail.length > snakeLength) {
+            snakeTrail.shift();
+          }
+        }
+
+        function drawApple() {
+          ctx.fillStyle = 'red';
+          ctx.fillRect(appleX * cellSize, appleY * cellSize, cellSize, cellSize);
+        }
+
+        function checkCollision() {
+          if (snakeX === appleX && snakeY === appleY) {
+            score++;
+            snakeLength++;
+            generateApple();
+          }
+        }
+
+        function generateApple() {
+          appleX = Math.floor(Math.random() * gridSize);
+          appleY = Math.floor(Math.random() * gridSize);
+        }
+
+        function checkDeath() {
+          if (snakeX < 0 || snakeX >= gridSize || snakeY < 0 || snakeY >= gridSize) {
+            gameOver = true;
+          }
+          for (let i = 0; i < snakeTrail.length - 1; i++) {
+            if (snakeTrail[i].x === snakeX && snakeTrail[i].y === snakeY) {
+              gameOver = true;
+            }
+          }
+        }
+
+        // Game loop
+        setInterval(() => {
+          if (!gameOver) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSnake();
+            moveSnake();
+            drawApple();
+            checkCollision();
+            checkDeath();
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`Score: ${score}`, 10, 10);
+          } else {
+            const gameoverScreen = document.createElement('div');
+            gameoverScreen.className = 'game-over';
+            gameoverScreen.innerHTML = `
+              <h2>Game Over!</h2>
+              <p>Score: ${score}</p>
+              <button onClick={window.location.reload()}>Restart</button>
+            `;
+            document.body.appendChild(gameoverScreen);
+
+            document.getElementById('restart-btn').addEventListener('click', () => {
+              gameOver = false;
+              score = 0;
+              snakeLength = 1;
+                            snakeTrail = [];
+              generateApple();
+              gameoverScreen.style.display = 'none';
+            });
+          }
+        }, 1000 / 5); // Slow down the snake
+
+        // Keyboard event listeners
+        document.addEventListener('keydown', (event) => {
+          if (!gameOver) {
+            switch (event.key) {
+              case 'ArrowUp':
+                velocityX = 0;
+                velocityY = -1;
+                break;
+              case 'ArrowDown':
+                velocityX = 0;
+                velocityY = 1;
+                break;
+              case 'ArrowLeft':
+                velocityX = -1;
+                velocityY = 0;
+                break;
+              case 'ArrowRight':
+                velocityX = 1;
+                velocityY = 0;
+                break;
+            }
+          }
+        });
+
+        // Initialize game
+        generateApple();
+    </script>
+</body>
+</html>
